@@ -33,33 +33,14 @@ from pprint import pprint
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "res"))
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from neon_tts_plugin_TODO_NAME import TemplateTTS  # TODO: Update Import
+from neon_tts_plugin_audiofiles import AudioFileTTS
 
 
 class TestTTS(unittest.TestCase):
     def setUp(self) -> None:
-        self.tts = TemplateTTS()
+        self.tts = AudioFileTTS()
 
-    def doCleanups(self) -> None:
-        try:
-            os.remove(os.path.join(os.path.dirname(__file__), "test.wav"))
-        except FileNotFoundError:
-            pass
-        try:
-            self.tts.playback.stop()
-            self.tts.playback.join()
-        except AttributeError:
-            pass
-
-    def test_speak_no_params(self):
-        out_file = os.path.join(os.path.dirname(__file__), "test.wav")
-        file, _ = self.tts.get_tts("Hello.", out_file)
-        self.assertEqual(file, out_file)
-
-    def test_empty_speak(self):
-        out_file = os.path.join(os.path.dirname(__file__), "test2.wav")
-        file, _ = self.tts.get_tts("</speak>Hello.", out_file)
-        self.assertFalse(os.path.isfile(out_file))
+    # TODO
 
 
 if __name__ == '__main__':

@@ -26,56 +26,48 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from os.path import join, isfile
 from typing import Optional
-from neon_utils.configuration_utils import get_neon_tts_config
-from neon_utils.logger import LOG
-from neon_utils.parse_utils import format_speak_tags
-
-try:
-    from neon_audio.tts import TTS, TTSValidator
-except ImportError:
-    from ovos_plugin_manager.templates.tts import TTS, TTSValidator
-from neon_utils.metrics_utils import Stopwatch
+from neon_utils.parse_utils import clean_quotes, clean_filename
+from ovos_utils.file_utils import get_cache_directory
+from ovos_plugin_manager.templates.tts import TTS, TTSValidator
+from ovos_config.locations import get_xdg_data_save_path
 
 
-class TemplateTTS(TTS):  # TODO: Replace 'Template' with TTS name
+class AudioFileTTS(TTS):
     def __init__(self, lang="en-us", config=None):
-        config = config or get_neon_tts_config().get("tts_module_name", {})  # TODO: Update name
-        super(TemplateTTS, self).__init__(lang, config, TemplateTTSValidator(self),
-                                          audio_ext="mp3",  # TODO: Specify output audio format
-                                          ssml_tags=["speak"])  # TODO: Specify valid SSML tags
-        # TODO: Optionally define any class parameters
+        super(AudioFileTTS, self).__init__(lang, config, AudioFileTTSValidator(self),
+                                           audio_ext="mp3",
+                                           ssml_tags=[])
+        self.valid_paths = [self.config.get('audio_file_path'),
+                            get_cache_directory(self.tts_name),
+                            join(get_xdg_data_save_path(), "AudioFileTTS")]
 
-    def get_tts(self, sentence: str, output_file: str, speaker: Optional[dict] = None):
-        stopwatch = Stopwatch()
-        speaker = speaker or dict()
+    def _resolve_audio_file(self, file_basename: str) -> Optional[str]:
+        # TODO: Use walk here to handle subdirectories and alternate file extensions
+        for path in self.valid_paths:
+            file = join(path, f"{file_basename}.{self.audio_extension}")
+            if isfile(file):
+                return file
 
-        # TODO: speaker params are optionally defined and should be handled whenever defined
-        # # Read utterance data from passed configuration
-        # request_lang = speaker.get("language",  self.lang)
-        # request_gender = speaker.get("gender", "female")
-        # request_voice = speaker.get("voice")
-
-        # TODO: Below is an example of a common ambiguous language code; test and implement or remove
-        # # Catch Chinese alt code
-        # if request_lang.lower() == "zh-zh":
-        #     request_lang = "cmn-cn"
-
-        to_speak = format_speak_tags(sentence)
-        LOG.debug(to_speak)
-        if to_speak:
-            with stopwatch:
-                pass
-                # TODO: Get TTS audio here
-
-            LOG.debug(f"TTS Synthesis time={stopwatch.time}")
-
-        return output_file, None
+    def get_tts(self, sentence: str, output_file: str,
+                speaker: Optional[dict] = None):
+        audio_file = self._resolve_audio_file(sentence)
+        if not audio_file:
+            sentence = clean_quotes(sentence)
+            audio_file = self._resolve_audio_file(sentence)
+        if not audio_file:
+            sentence = clean_filename(sentence)
+            audio_file = self._resolve_audio_file(sentence)
+        if not audio_file:
+            sentence = sentence.lower()
+            audio_file = self._resolve_audio_file(sentence)
+        return audio_file, None
 
 
-class TemplateTTSValidator(TTSValidator):  # TODO: Replace 'Template' with TTS name
+class AudioFileTTSValidator(TTSValidator):
     def __init__(self, tts):
-        super(TemplateTTSValidator, self).__init__(tts)
+        super(AudioFileTTSValidator, self).__init__(tts)
 
     def validate_lang(self):
         # TODO: Add some validation of `self.lang` default language
@@ -90,4 +82,4 @@ class TemplateTTSValidator(TTSValidator):  # TODO: Replace 'Template' with TTS n
         pass
 
     def get_tts_class(self):
-        return TemplateTTS
+        return AudioFileTTS

@@ -72,6 +72,8 @@ setup(
     author_email='developers@neon.ai',
     license='BSD-3.0',
     packages=find_packages(),
+    package_data={'neon_stt_plugin_audiofiles': ['audio/*/*/*.wav',
+                                                 'audio/*/*.wav']},
     install_requires=get_requirements("requirements.txt"),
     zip_safe=True,
     classifiers=[

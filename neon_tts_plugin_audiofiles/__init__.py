@@ -26,29 +26,47 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from os.path import join, isfile
-from typing import Optional
+from os.path import join, dirname, isfile
+from pathlib import Path
+from typing import Optional, Union
 from neon_utils.parse_utils import clean_quotes, clean_filename
-from ovos_utils.file_utils import get_cache_directory
 from ovos_plugin_manager.templates.tts import TTS, TTSValidator
 from ovos_config.locations import get_xdg_data_save_path
+from ovos_workshop.resource_files import ResourceType, ResourceFile
 
 
 class AudioFileTTS(TTS):
     def __init__(self, lang="en-us", config=None):
         super(AudioFileTTS, self).__init__(lang, config, AudioFileTTSValidator(self),
-                                           audio_ext="mp3",
+                                           audio_ext="wav",
                                            ssml_tags=[])
-        self.valid_paths = [self.config.get('audio_file_path'),
-                            get_cache_directory(self.tts_name),
-                            join(get_xdg_data_save_path(), "AudioFileTTS")]
+        self.res_type = ResourceType('audio_file', f'.{self.audio_ext}')
+        self.res_type.user_directory = self.config.get('audio_file_path') or \
+            join(get_xdg_data_save_path(), "AudioFileTTS")
+        self.res_type.base_directory = join(dirname(__file__), 'audio')
 
-    def _resolve_audio_file(self, file_basename: str) -> Optional[str]:
-        # TODO: Use walk here to handle subdirectories and alternate file extensions
-        for path in self.valid_paths:
-            file = join(path, f"{file_basename}.{self.audio_extension}")
-            if isfile(file):
-                return file
+    def _resolve_audio_file(self, file_basename: str) -> \
+            Union[Path, str, None]:
+        """
+        Resolve the specified TTS audio file for the specified language
+        Args:
+            file_basename: filename to locate,
+                           optionally with specified voice directory
+        Returns:
+            str or Path representation of the requested audio file else None
+        """
+        if '/' in file_basename:
+            user_file = join(self.res_type.user_directory,
+                             file_basename + self.res_type.file_extension)
+            if isfile(user_file):
+                return user_file
+            base_file = join(self.res_type.base_directory,
+                             file_basename + self.res_type.file_extension)
+            if isfile(base_file):
+                return base_file
+        else:
+            resource_file = ResourceFile(self.res_type, file_basename)
+            return resource_file.file_path
 
     def get_tts(self, sentence: str, output_file: str,
                 speaker: Optional[dict] = None):
@@ -62,6 +80,7 @@ class AudioFileTTS(TTS):
         if not audio_file:
             sentence = sentence.lower()
             audio_file = self._resolve_audio_file(sentence)
+        audio_file = str(audio_file) if audio_file else None
         return audio_file, None
 
 

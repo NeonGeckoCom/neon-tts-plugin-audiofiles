@@ -29,7 +29,6 @@
 import os
 import sys
 import unittest
-from pprint import pprint
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "res"))
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -38,9 +37,33 @@ from neon_tts_plugin_audiofiles import AudioFileTTS
 
 class TestTTS(unittest.TestCase):
     def setUp(self) -> None:
-        self.tts = AudioFileTTS()
+        self.user_audio_dir = os.path.join(os.path.dirname(__file__),
+                                           'test_audio_files')
+        self.tts = AudioFileTTS(config={'audio_file_path': self.user_audio_dir})
 
-    # TODO
+    def test_get_tts(self):
+        # User Audio Simple
+        audio_file, _ = self.tts.get_tts("how are you_", '')
+        self.assertEqual(audio_file, os.path.join(self.user_audio_dir,
+                                                  'how are you_.wav'))
+        audio_file, _ = self.tts.get_tts("how are you?", '')
+        self.assertEqual(audio_file, os.path.join(self.user_audio_dir,
+                                                  'how are you_.wav'))
+        audio_file, _ = self.tts.get_tts("How are you?", '')
+        self.assertEqual(audio_file, os.path.join(self.user_audio_dir,
+                                                  'how are you_.wav'))
+        # User Audio nested
+        audio_file, _ = self.tts.get_tts("location", '')
+        self.assertEqual(audio_file, os.path.join(self.user_audio_dir,
+                                                  'my_voice', 'location.wav'))
+        # User Audio spec. subdir
+        audio_file, _ = self.tts.get_tts("my_voice/location", '')
+        self.assertEqual(audio_file, os.path.join(self.user_audio_dir,
+                                                  'my_voice', 'location.wav'))
+        # Plugin Audio
+        audio_file, _ = self.tts.get_tts("NO", '')
+        self.assertEqual(os.path.basename(audio_file), 'no.wav')
+        self.assertTrue(os.path.isfile(audio_file))
 
 
 if __name__ == '__main__':

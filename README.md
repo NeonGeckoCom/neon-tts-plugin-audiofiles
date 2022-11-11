@@ -1,11 +1,12 @@
 # NeonAI Template TTS Plugin  # TODO: Name
 [Mycroft](https://mycroft-ai.gitbook.io/docs/mycroft-technologies/mycroft-core/plugins) compatible
-TTS Plugin for Template Text-to-Speech.  # TODO: Update Name
+TTS Plugin for playing back static audio files. Plugin will look for a file whose name matches the requested
+TTS string and play it back.
 
 # Configuration:
-# TODO: Specify any optional or required configuration values
 ```yaml
 tts:
-    module: tts_module_name  # TODO: Unique Entry Point Name
-    tts_module_name: {}  # TODO: Any module config
+    module: neon-tts-plugin-audiofiles
+    neon-tts-plugin-audiofiles:
+      audio_file_path: /home/$USER/tts_audio_files
 ```

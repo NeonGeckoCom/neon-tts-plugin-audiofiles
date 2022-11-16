@@ -74,6 +74,7 @@ setup(
     packages=find_packages(),
     package_data={'neon_tts_plugin_audiofiles': ['audio/*/*/*.wav',
                                                  'audio/*/*.wav']},
+    include_package_data=True,
     install_requires=get_requirements("requirements.txt"),
     zip_safe=True,
     classifiers=[

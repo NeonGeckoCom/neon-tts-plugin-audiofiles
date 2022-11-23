@@ -30,6 +30,7 @@ from os.path import join, dirname, isfile
 from pathlib import Path
 from typing import Optional, Union
 from neon_utils.parse_utils import clean_quotes, clean_filename
+from ovos_utils.log import LOG
 from ovos_plugin_manager.templates.tts import TTS, TTSValidator
 from ovos_config.locations import get_xdg_data_save_path
 from ovos_workshop.resource_files import ResourceType, ResourceFile
@@ -82,6 +83,10 @@ class AudioFileTTS(TTS):
             audio_file = self._resolve_audio_file(sentence)
         # TODO: Fallback here with regex search
         audio_file = str(audio_file) if audio_file else None
+        if not audio_file:
+            LOG.error(f"No Audio File resolved for: '{sentence}' in paths: "
+                      f"{self.res_type.user_directory}, "
+                      f"{self.res_type.base_directory}")
         return audio_file, None
 
 

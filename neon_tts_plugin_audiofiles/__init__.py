@@ -26,7 +26,7 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from os.path import join, dirname, isfile
+from os.path import join, dirname, isfile, expanduser
 from pathlib import Path
 from typing import Optional, Union
 from neon_utils.parse_utils import clean_quotes, clean_filename
@@ -38,11 +38,13 @@ from ovos_workshop.resource_files import ResourceType, ResourceFile
 
 class AudioFileTTS(TTS):
     def __init__(self, lang="en-us", config=None):
-        super(AudioFileTTS, self).__init__(lang, config, AudioFileTTSValidator(self),
+        super(AudioFileTTS, self).__init__(lang, config,
+                                           AudioFileTTSValidator(self),
                                            audio_ext="wav",
                                            ssml_tags=[])
         self.res_type = ResourceType('audio_file', f'.{self.audio_ext}')
-        self.res_type.user_directory = self.config.get('audio_file_path') or \
+        self.res_type.user_directory = expanduser(
+            self.config.get('audio_file_path')) or \
             join(get_xdg_data_save_path(), "AudioFileTTS")
         self.res_type.base_directory = join(dirname(__file__), 'audio')
 
